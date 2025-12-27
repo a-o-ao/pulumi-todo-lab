@@ -1,0 +1,30 @@
+{
+  "name": "pulumi-todo-lab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
+    "build": "pnpm --filter frontend build",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "concurrently": "^6.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^0.0.0"
+  },
+  "dependencies": {
+    "@mui/material": "^5.0.0",
+    "fastify": "^3.0.0",
+    "pg": "^8.0.0",
+    "prisma": "^2.0.0",
+    "react": "^17.0.0",
+    "react-dom": "^17.0.0",
+    "react-hook-form": "^7.0.0",
+    "valibot": "^1.2.0"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "packageManager": "pnpm@10.26.1+sha512.664074abc367d2c9324fdc18037097ce0a8f126034160f709928e9e9f95d98714347044e5c3164d65bd5da6c59c6be362b107546292a8eecb7999196e5ce58fa"
+}

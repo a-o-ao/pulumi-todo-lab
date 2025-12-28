@@ -1,9 +1,9 @@
 import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
 import { QueryClient } from '@tanstack/react-query';
-import type { AppRouter } from '../../backend/src/trpc/router';
 
-export const trpc = createTRPCReact<AppRouter>();
+// Use `any` here to avoid cross-package type import issues in the workspace editor.
+export const trpc = createTRPCReact<any>();
 
 export function createTRPCClient() {
   const queryClient = new QueryClient();

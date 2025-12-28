@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { trpc, createTRPCClient } from './services/trpcClient';
+import { trpc, createTRPCClientInstance } from './services/trpcClient';
 
 const rootElement = document.getElementById('root');
 
@@ -10,7 +10,7 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-const { trpcClient, queryClient } = createTRPCClient();
+const { trpcClient, queryClient } = createTRPCClientInstance();
 
 const root = ReactDOM.createRoot(rootElement);
 

@@ -10,17 +10,7 @@
   "devDependencies": {
     "concurrently": "^6.0.0",
     "typescript": "^5.9.3",
-    "vitest": "^0.0.0"
-  },
-  "dependencies": {
-    "@mui/material": "^5.0.0",
-    "fastify": "^3.0.0",
-    "pg": "^8.0.0",
-    "prisma": "^2.0.0",
-    "react": "^17.0.0",
-    "react-dom": "^17.0.0",
-    "react-hook-form": "^7.0.0",
-    "valibot": "^1.2.0"
+    "vitest": "^4.0.16"
   },
   "workspaces": [
     "frontend",

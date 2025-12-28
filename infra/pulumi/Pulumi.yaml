@@ -1,0 +1,10 @@
+name: pulumi-todo-lab
+runtime: nodejs
+description: Infrastructure as Code for the TODO application using Pulumi
+stack: dev
+config:
+  aws:region: us-west-2
+  database: postgres
+  bucketName: todo-app-bucket
+  instanceType: t2.micro
+  instanceCount: 1

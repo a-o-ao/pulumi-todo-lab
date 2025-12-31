@@ -1,5 +1,5 @@
 import { initTRPC } from '@trpc/server';
-import { z } from 'zod';
+import * as v from 'valibot';
 import { prisma } from '../prisma/client';
 import type { Context } from './context';
 
@@ -15,7 +15,7 @@ export const todoRouter = t.router({
       throw error;
     }
   }),
-  getById: t.procedure.input(z.string()).query(async ({ input }) => {
+  getById: t.procedure.input(v.string()).query(async ({ input }) => {
     try {
       return await prisma.todo.findUnique({ where: { id: input } });
     } catch (error) {
@@ -25,10 +25,10 @@ export const todoRouter = t.router({
   }),
   create: t.procedure
     .input(
-      z.object({
-        title: z.string().min(1, 'Title is required'),
-        description: z.string().optional(),
-        dueDate: z.string().optional(),
+      v.object({
+        title: v.pipe(v.string(), v.minLength(1, 'Title is required')),
+        description: v.optional(v.string()),
+        dueDate: v.optional(v.string()),
       })
     )
     .mutation(async ({ input }) => {
@@ -48,12 +48,12 @@ export const todoRouter = t.router({
     }),
   update: t.procedure
     .input(
-      z.object({
-        id: z.string(),
-        title: z.string().min(1, 'Title is required'),
-        description: z.string().optional(),
-        dueDate: z.string().optional(),
-        status: z.enum(['todo', 'doing', 'done']),
+      v.object({
+        id: v.string(),
+        title: v.pipe(v.string(), v.minLength(1, 'Title is required')),
+        description: v.optional(v.string()),
+        dueDate: v.optional(v.string()),
+        status: v.picklist(['todo', 'doing', 'done']),
       })
     )
     .mutation(async ({ input }) => {
@@ -72,7 +72,7 @@ export const todoRouter = t.router({
         throw error;
       }
     }),
-  delete: t.procedure.input(z.string()).mutation(async ({ input }) => {
+  delete: t.procedure.input(v.string()).mutation(async ({ input }) => {
     try {
       return await prisma.todo.delete({ where: { id: input } });
     } catch (error) {

@@ -1,4 +1,4 @@
-import { ZodError } from 'zod';
+import * as v from 'valibot';
 
 export class AppError extends Error {
     public readonly statusCode: number;
@@ -10,8 +10,8 @@ export class AppError extends Error {
     }
 }
 
-export const handleZodError = (error: ZodError): AppError => {
-    const message = error.errors.map(err => err.message).join(', ');
+export const handleValibotError = (error: v.ValiError<any>): AppError => {
+    const message = error.issues.map(issue => issue.message).join(', ');
     return new AppError(message, 400);
 };
 

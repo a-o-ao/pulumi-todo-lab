@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "concurrently \"pnpm --filter backend dev\" \"pnpm --filter frontend dev\"",
     "build": "pnpm --filter frontend build",
-    "test": "vitest"
+    "test": "pnpm -r test",
+    "test:backend": "pnpm --filter pulumi-todo-lab-backend test",
+    "test:frontend": "pnpm --filter pulumi-todo-lab-frontend test"
   },
   "devDependencies": {
     "concurrently": "^6.0.0",

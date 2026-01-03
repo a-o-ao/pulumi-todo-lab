@@ -1,4 +1,5 @@
 import * as pulumi from "@pulumi/pulumi";
+import * as path from "path";
 import { VpcStack } from "./aws/vpc";
 import { SecurityGroups } from "./aws/security";
 import { RdsStack } from "./aws/rds";
@@ -6,6 +7,8 @@ import { EcrStack } from "./aws/ecr";
 import { EcsStack } from "./aws/ecs";
 import { S3Stack } from "./aws/s3";
 import { CloudFrontStack } from "./aws/cloudfront";
+import { DockerBuildStack } from "./deploy/docker-build";
+import { FrontendDeployStack } from "./deploy/frontend-deploy";
 
 // Pulumi設定読み込み
 const config = new pulumi.Config();
@@ -48,11 +51,16 @@ const ecrStack = new EcrStack({
     environment,
 });
 
-// 5. ECS + EC2
-// NOTE: 初回デプロイ時は、ECRにイメージをpushしてから実行してください
-// デフォルトイメージとして nginx を使用 (実際にはバックエンドのイメージに差し替え)
-const imageUri = ecrStack.repositoryUrl.apply(url => `${url}:latest`);
+// 5. Docker イメージのビルド＆プッシュ（自動化）
+const projectRoot = path.resolve(__dirname, "../.."); // infra/pulumi から2階層上がプロジェクトルート
+const dockerBuildStack = new DockerBuildStack({
+    projectName,
+    environment,
+    repositoryUrl: ecrStack.repositoryUrl,
+    contextPath: projectRoot,
+});
 
+// 6. ECS + EC2
 const ecsStack = new EcsStack({
     projectName,
     environment,
@@ -60,23 +68,33 @@ const ecsStack = new EcsStack({
     subnetIds: [vpcStack.publicSubnet1.id],
     securityGroupIds: [securityGroups.ecsSecurityGroup.id],
     instanceType,
-    imageUri,
+    imageUri: dockerBuildStack.imageUri,
     databaseUrl: rdsStack.connectionString,
 });
 
-// 6. S3 (Frontend)
+// 7. S3 (Frontend)
 const s3Stack = new S3Stack({
     projectName,
     environment,
 });
 
-// 7. CloudFront
+// 8. CloudFront
 const cloudFrontStack = new CloudFrontStack({
     projectName,
     environment,
     s3BucketDomainName: s3Stack.bucketDomainName,
     s3BucketId: s3Stack.bucketName,
     ec2PublicDns: ecsStack.publicDns,
+});
+
+// 9. フロントエンドのビルド＆デプロイ（自動化）
+const frontendPath = path.resolve(__dirname, "../../frontend");
+const frontendDeployStack = new FrontendDeployStack({
+    projectName,
+    environment,
+    bucketName: s3Stack.bucketName,
+    frontendPath: frontendPath,
+    apiUrl: cloudFrontStack.domainName.apply((d: string) => `https://${d}`),
 });
 
 // エクスポート
@@ -89,4 +107,4 @@ export const ec2InstanceId = ecsStack.ec2Instance.id;
 export const ec2PublicIp = ecsStack.publicIp;
 export const s3BucketName = s3Stack.bucketName;
 export const cloudFrontDomain = cloudFrontStack.domainName;
-export const cloudFrontUrl = cloudFrontStack.domainName.apply(d => `https://${d}`);
+export const cloudFrontUrl = cloudFrontStack.domainName.apply((d: string) => `https://${d}`);

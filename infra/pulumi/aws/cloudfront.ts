@@ -25,7 +25,7 @@ export class CloudFrontStack {
         // S3 Bucket Policy (CloudFrontからのアクセスを許可)
         new aws.s3.BucketPolicy(`${name}-frontend-policy`, {
             bucket: args.s3BucketId,
-            policy: pulumi.all([args.s3BucketId, this.oai.iamArn]).apply(([bucketId, oaiArn]) =>
+            policy: pulumi.all([args.s3BucketId, this.oai.iamArn]).apply(([bucketId, oaiArn]: [string, string]) =>
                 JSON.stringify({
                     Version: "2012-10-17",
                     Statement: [

@@ -53,73 +53,54 @@ pulumi stack init dev
 
 ### 3. 設定値の確認・変更
 
-`Pulumi.yaml` で以下を設定:
+[Pulumi.yaml](Pulumi.yaml) にデフォルト設定があります。環境に応じて変更が必要な場合：
 
-- `aws:region`: ap-northeast-1 (東京リージョン)
-- `projectName`: todo-app
-- `environment`: dev
-- `dbUsername`: todouser
-- `dbPassword`: **本番環境では AWS Secrets Manager を使用**
-- `instanceType`: t3.small
-- `dbInstanceClass`: db.t3.micro
-
-### 4. バックエンドDockerイメージのビルドとプッシュ
-
+**方法1: pulumi config コマンドを使用**
 ```bash
-# リポジトリURLを取得 (pulumi up 後に実行)
-pulumi stack output ecrRepositoryUrl
-
-# バックエンドイメージをビルド
-cd ../../backend
-docker build -t todo-backend .
-
-# ECRにログイン
-aws ecr get-login-password --region ap-northeast-1 | \
-  docker login --username AWS --password-stdin <ECR_REPOSITORY_URL>
-
-# タグ付けしてプッシュ
-docker tag todo-backend:latest <ECR_REPOSITORY_URL>:latest
-docker push <ECR_REPOSITORY_URL>:latest
+pulumi config set aws:region ap-northeast-1
+pulumi config set pulumi-todo-lab:projectName todo-app-20260102
+pulumi config set pulumi-todo-lab:dbPassword --secret your-secure-password
 ```
 
-### 5. インフラのデプロイ
+**方法2: Pulumi.dev.yaml を直接編集
+（既存の設定例を参照）
+
+### 4. インフラとアプリケーションのデプロイ（自動化済み）
+
+Pulumiが以下をすべて自動で実行します：
+1. `pulumi up` でインフラとアプリケーションをデプロイ
+2. データベースマイグレーションを手動実行（初回のみ）
+3. CloudFront URLでアプリケーションにアクセス
+
+**注意**: マイグレーション実行前はバックエンドがデータベースに接続できないためエラーになります。
 
 ```bash
 cd infra/pulumi
 
+# 依存パッケージのインストール
+pnpm install
+
 # プレビュー (変更内容の確認)
 pulumi preview
 
-# デプロイ
+# デプロイ（すべて自動実行）
 pulumi up
 ```
 
+**注意**: 初回デプロイ時は10-15分程度かかります。Docker イメージのビルドとアップロードに時間がかかるためです。
+
 ## デプロイ後の作業
 
-### 1. データベースマイグレーション
+### アプリケーションの確認
+
+デプロイが完了したら、CloudFront URLにアクセスしてアプリケーションを確認できます：
 
 ```bash
-# EC2インスタンスにSSH接続
-ssh -i <your-key.pem> ec2-user@<EC2_PUBLIC_IP>
-
-# または、RDSに直接接続できる環境から
-export DATABASE_URL=$(pulumi stack output rdsDatabaseUrl --show-secrets)
-cd backend
-pnpm prisma migrate deploy
+# CloudFront URLを取得
+pulumi stack output cloudFrontUrl
 ```
 
-### 2. フロントエンドのデプロイ
-
-```bash
-cd frontend
-
-# ビルド (バックエンドURLを環境変数に設定)
-export VITE_API_URL=https://<CLOUDFRONT_DOMAIN>
-pnpm build
-
-# S3にアップロード
-aws s3 sync dist/ s3://$(pulumi -C ../infra/pulumi stack output s3BucketName)/ --delete
-```
+ブラウザで表示されたURLにアクセスしてください。
 
 ## 出力値
 
@@ -148,11 +129,18 @@ pulumi stack output
 ### ECSタスクが起動しない
 
 ```bash
-# ECSタスクのログを確認
-aws logs tail /ecs/todo-app-dev-backend --follow
+# 実際のプロジェクト名を使用
+aws logs tail /ecs/todo-app-20260102-dev-backend --follow
+
+# または、Pulumiから取得
+pulumi stack output ecsClusterName
 
 # ECRにイメージがプッシュされているか確認
-aws ecr list-images --repository-name todo-app-dev-backend
+aws ecr list-images --repository-name todo-app-20260102-dev-backend
+
+# ECRイメージを確認
+pulumi stack output ecrRepositoryUrl
+aws ecr list-images --repository-name $(pulumi stack output ecrRepositoryUrl | cut -d'/' -f2)
 ```
 
 ### RDSに接続できない
@@ -191,12 +179,15 @@ infra/pulumi/
 ├── Pulumi.yaml           # プロジェクト設定
 ├── package.json          # 依存関係
 ├── tsconfig.json         # TypeScript設定
-└── aws/
-    ├── vpc.ts            # VPC、サブネット、ルートテーブル
-    ├── security.ts       # セキュリティグループ
-    ├── rds.ts            # RDS PostgreSQL
-    ├── ecr.ts            # ECR レジストリ
-    ├── ecs.ts            # ECS クラスター、サービス、EC2
-    ├── s3.ts             # S3 バケット (フロントエンド)
-    └── cloudfront.ts     # CloudFront ディストリビューション
+├── aws/                  # AWSリソース定義
+│   ├── vpc.ts            # VPC、サブネット、ルートテーブル
+│   ├── security.ts       # セキュリティグループ
+│   ├── rds.ts            # RDS PostgreSQL
+│   ├── ecr.ts            # ECR レジストリ
+│   ├── ecs.ts            # ECS クラスター、サービス、EC2
+│   ├── s3.ts             # S3 バケット (フロントエンド)
+│   └── cloudfront.ts     # CloudFront ディストリビューション
+└── deploy/               # デプロイロジック
+    ├── docker-build.ts   # バックエンド Docker ビルド＆プッシュ
+    └── frontend-deploy.ts # フロントエンド ビルド＆S3アップロード
 ```

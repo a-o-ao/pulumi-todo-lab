@@ -1,6 +1,7 @@
 packages:
   - backend
   - frontend
+  - infra/pulumi
 
 ignoredBuiltDependencies:
   - '@prisma/client'

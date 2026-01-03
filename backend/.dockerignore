@@ -4,8 +4,6 @@ dist
 .git
 *.log
 npm-debug.log
-Dockerfile
-.dockerignore
 /.vscode
 /.idea
 coverage

@@ -9,10 +9,13 @@ export const trpc = createTRPCReact<AppRouter>();
 export function createTRPCClientInstance() {
   const queryClient = new QueryClient();
 
+  // VITE_API_URL があればそれを使い、無ければ現在のオリジンを使用
+  const baseUrl = (import.meta.env.VITE_API_URL || window.location.origin).replace(/\/$/, '');
+
   const trpcClient = createTRPCClient<AppRouter>({
     links: [
       httpBatchLink({
-        url: 'http://localhost:3000/trpc',
+        url: `${baseUrl}/trpc`,
       }),
     ],
   });

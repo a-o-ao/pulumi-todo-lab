@@ -1,9 +1,14 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 
+// Amazon ECS に最適化された AL2023 AMI を SSM Parameter Store から取得
+const ecsAmiId = aws.ssm.getParameterOutput({
+    name: "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id",
+});
+
 // EC2インスタンスの設定
 const instance = new aws.ec2.Instance("todo-app-instance", {
-    ami: "ami-0c55b159cbfafe1f0", // Amazon Linux 2 AMIの例
+    ami: ecsAmiId.value, // Amazon ECS に最適化された AL2023 AMI
     instanceType: "t2.micro",
     tags: {
         Name: "TodoAppInstance",
@@ -47,3 +52,4 @@ const instanceWithSecurityGroup = new aws.ec2.Instance("todo-app-instance-with-s
 // 出力
 export const instanceId = instanceWithSecurityGroup.id;
 export const publicIp = instanceWithSecurityGroup.publicIp;
+export const publicDns = instanceWithSecurityGroup.publicDns;

@@ -1,10 +1,20 @@
 name: pulumi-todo-lab
 runtime: nodejs
 description: Infrastructure as Code for the TODO application using Pulumi
-stack: dev
 config:
-  aws:region: us-west-2
-  database: postgres
-  bucketName: todo-app-bucket
-  instanceType: t2.micro
-  instanceCount: 1
+  aws:region:
+    value: ap-northeast-1  # 東京リージョン
+  pulumi-todo-lab:projectName:
+    value: todo-app
+  pulumi-todo-lab:environment:
+    value: dev
+  pulumi-todo-lab:dbUsername:
+    value: todouser
+  pulumi-todo-lab:dbPassword:
+    value: changeme123  # 本番環境では secrets manager を使用
+  pulumi-todo-lab:dbName:
+    value: tododb
+  pulumi-todo-lab:instanceType:
+    value: t3.small
+  pulumi-todo-lab:dbInstanceClass:
+    value: db.t3.micro
